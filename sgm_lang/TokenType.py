@@ -1,33 +1,42 @@
-from enum import Enum, auto
+from enum import Enum
 
 
 class TokenType(Enum):
 
-    INT = 1
-    FLOAT = 2
+    BOOL = 1
+    INT = 2
+    FLOAT = 3
+    STRING = 4
+    DATA_TYPE = 5
+    ID = 6
 
-    L_BRACE = auto()
-    R_BRACE = auto()
-    L_PAREN = auto()
-    R_PAREN = auto()
+    L_BRACE = '{'
+    R_BRACE = '}'
+    L_PAREN = '('
+    R_PAREN = ')'
 
-    COMMENT = auto()
-    ASSIGN = auto()
-    EQUAL = auto()
-    LESS = auto()
-    GREATER = auto()
-    LESS_EQUAL = auto()
-    GREATER_EQUAL = auto()
+    COMMENT = '#'
+    ASSIGN = '='
+    EQUAL = "=="
+    LESS = '<'
+    GREATER = '>'
+    LESS_EQUAL = "<="
+    GREATER_EQUAL = ">="
 
-    OR = auto()
-    AND = auto()
-    NOT = auto()
+    OR = "||"
+    AND = "&&"
+    NOT = '!'
 
-    ADD = auto()
-    SUB = auto()
-    MUL = auto()
-    DIV = auto()
-    MOD = auto()
+    ADD = '+'
+    SUB = '-'
+    MUL = '*'
+    DIV = '/'
+    MOD = '%'
+    STR_INDICATOR = '\"'
+
+    WHILE = "youSpinMeRound"
+    PRINT = "showMeYourGoods"
+    IF = "doItIf"
 
     def __repr__(self):
         return str(self.name)
