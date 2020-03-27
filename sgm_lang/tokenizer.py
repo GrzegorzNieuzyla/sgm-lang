@@ -14,9 +14,9 @@ def tokenizeNumber(code, position):
         number += code[position]
         position += 1
     if isFloat:
-        return position, (TokenType.FLOAT, number)
+        return position-1, (TokenType.FLOAT, number)
     else:
-        return position, (TokenType.FLOAT, number)
+        return position-1, (TokenType.INT, number)
 
 
 def tokenizeSpecialCharacter(code, position):
@@ -78,7 +78,6 @@ def tokenizeSpecialCharacter(code, position):
         token = TokenType.MOD
     else:
         raise TokenizerError("Unknown character")
-    position += 1
     return position, (token, None)
 
 
@@ -105,3 +104,5 @@ def tokenize(code):
 
 print(tokenize("123.231 12 0.1 1."))
 print(tokenize(" - + = == = { }"))
+print(tokenize(" 12=123+12<332+"))
+
