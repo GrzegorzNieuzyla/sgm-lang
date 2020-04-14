@@ -33,6 +33,7 @@ class TokenType(Enum):
     DIV = '/'
     MOD = '%'
     STR_INDICATOR = '\"'
+    SEMICOLON = ';'
 
     WHILE = "youSpinMeRound"
     PRINT = "showMeYourGoods"

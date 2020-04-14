@@ -6,7 +6,7 @@ class TokenizerError(Exception):
     pass
 
 
-def isProperNameChar(currentElement):
+def _isProperNameChar(currentElement):
     isNone = currentElement is not None
     return isNone and (currentElement.isdigit() or currentElement.isalpha() or currentElement == '_')
 
@@ -143,7 +143,7 @@ class Tokenizer:
     def tokenizeWord(self):
         name = ""
         currentElement = self.getCharAt(self.position)
-        while isProperNameChar(currentElement):
+        while _isProperNameChar(currentElement):
             name += currentElement
             self.position += 1
             currentElement = self.getCharAt(self.position)
@@ -175,21 +175,22 @@ class Tokenizer:
         self.tokensList.append((token, tokenValue))
 
 
-tests = [
-    " 123.456",
-    "123 456 78",
-    "12....3",
-    "32.2.2.2.2",
-    " = == === ==== ",
-    "a+b / a + b %",
-    "mrINTernational a = 12.3",
-    "stringiBoi s = 12",
-    "\"It is a String\""
+if __name__ == "__main__":
+    tests = [
+        " 123.456",
+        "123 456 78",
+        "12....3",
+        "32.2.2.2.2",
+        " = == === ==== ",
+        "a+b / a + b %",
+        "mrINTernational a = 12.3",
+        "stringiBoi s = 12",
+        "\"It is a String\""
 
-]
+    ]
 
-for theCode in tests:
-    try:
-        print(f'{theCode}\nTOKENIZED AS: {Tokenizer(theCode).tokenize()}\n')
-    except TokenizerError as e:
-        print(f'{theCode}\nTOKENIZED AS: {e}\n')
+    for theCode in tests:
+        try:
+            print(f'{theCode}\nTOKENIZED AS: {Tokenizer(theCode).tokenize()}\n')
+        except TokenizerError as e:
+            print(f'{theCode}\nTOKENIZED AS: {e}\n')
