@@ -1,14 +1,10 @@
-from sgm_lang.TokenType import TokenType
 from sgm_lang.DataType import DataType
+from sgm_lang.TokenType import TokenType
+from sgm_lang.CompoundToken import CompoundToken
 
 
 class TokenizerError(Exception):
     pass
-
-
-def _isProperNameChar(currentElement):
-    isNone = currentElement is not None
-    return isNone and (currentElement.isdigit() or currentElement.isalpha() or currentElement == '_')
 
 
 class Tokenizer:
@@ -16,163 +12,115 @@ class Tokenizer:
     def __init__(self, code):
         self.position = 0
         self.code = code
+        self.splitCode = []
         self.tokensList = []
 
-    def getCharAt(self, x):
-        if x < len(self.code):
-            return self.code[x]
-        else:
-            return None
+        # jak wystąpi {()} to możesz powstawiać między spacje i semantycznie bez zmiany: {()} == { ( ) }
+        self.splittable = "(){}![]+/-*;"
+        # Tych nie można rozdzielać bez zmiany znaczenia: == [to nie to samo co ] = =
+        self.nonSplittable = "<>=|&"
+
+        self.keyWords = [x.value for x in TokenType]
+        self.dataTypes = [x.value for x in DataType]
+
+    def isParsableToInt(self, string):
+        try:
+            int(string)
+        except ValueError:
+            return False
+        return True
+
+    def isParsableToFloat(self, string):
+        try:
+            float(string)
+        except ValueError:
+            return False
+        return True
+
+    def isSplittable(self, char):
+        return char in self.splittable
+
+    def isNonSplittable(self, char):
+        return char in self.nonSplittable
+
+    def isSymbol(self, char):
+        return self.isNonSplittable(char) or self.isSplittable(char)
+
+    # czy dane dwa znaki występujące po sobię można rozdzielić?
+    # == -> nie
+    # a= -> tak (a= [to to samo co ] a = )
+    def canBeSplit(self, char1, char2):
+        return char1.isalnum() and self.isSymbol(char2) or \
+               char2.isalnum() and self.isSymbol(char1) or \
+               self.isSplittable(char1) and self.isSymbol(char2) or \
+               self.isSplittable(char2) and self.isSymbol(char1)
+
+    # Działa jak split(), ale dodatkowo uwzględnia Stringi w ciągu-> nie rozdzieli spacjami słów wewnątrz "...".
+    # Powinno skipowac wyeskejpowane " -> \"
+    def splitWithStrings(self):
+        result = []
+        accumulator = ""
+        position = 0
+        while position < len(self.code):
+            if self.code[position] == "\"":
+                if accumulator != "":
+                    result.append(accumulator)
+                    accumulator = ""
+                accumulator += self.code[position]
+                position += 1
+                while position < len(self.code):
+                    accumulator += self.code[position]
+                    if self.code[position] == "\"":
+                        if self.code[position - 1] != "\\":
+                            result.append(accumulator)
+                            accumulator = ""
+                            break
+                    position += 1
+            elif self.code[position].isspace():
+                if accumulator != "":
+                    result.append(accumulator)
+                    accumulator = ""
+            else:
+                accumulator += self.code[position]
+            position += 1
+        if accumulator != "":
+            result.append(accumulator)
+        return result
+
+    def insertSpacesAndSplit(self):
+        index = 1
+        while index < len(self.code):
+            if self.canBeSplit(self.code[index - 1], self.code[index]):
+                self.code = self.code[:index] + ' ' + self.code[index:]
+                index += 1
+            index += 1
+        self.splitCode = self.splitWithStrings()
 
     def tokenize(self):
-        while self.getCharAt(self.position):
-            currentElement = self.getCharAt(self.position)
-            if currentElement.isspace():
-                pass
-            elif currentElement.isalpha() or currentElement == '_':
-                self.tokenizeWord()
-            elif currentElement.isdigit():
-                self.tokenizeNumber()
+        self.insertSpacesAndSplit()
+        while self.position < len(self.splitCode):
+            word = self.splitCode[self.position]
+
+            if word in self.keyWords:
+                self.tokensList.append((TokenType(word), None))
+            elif word in self.dataTypes:
+                self.tokensList.append((CompoundToken.DATA_TYPE, DataType(word)))
+
+            elif word == "true" or word == "false":
+                self.tokensList.append((CompoundToken.BOOL, bool(word)))
+            elif self.isParsableToInt(word):
+                self.tokensList.append((CompoundToken.INT, int(word)))
+            elif self.isParsableToFloat(word):
+                self.tokensList.append((CompoundToken.FLOAT, float(word)))
+            elif "\"" in word:
+                self.tokensList.append((CompoundToken.STRING, word))
+
+            elif word.isidentifier():
+                self.tokensList.append((CompoundToken.ID, word))
             else:
-                self.tokenizeSpecialCharacter()
+                raise TokenizerError("Something is wrong in Tokenizer")
             self.position += 1
         return self.tokensList
-
-    def tokenizeNumber(self):
-        number = ""
-        currentElement = self.getCharAt(self.position)
-        while currentElement and currentElement.isdigit():
-            number += currentElement
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-
-        if currentElement and currentElement == '.':
-            number += '.'
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            while currentElement and currentElement.isdigit():
-                number += currentElement
-                self.position += 1
-                currentElement = self.getCharAt(self.position)
-            self.position -= 1
-            self.tokensList.append((TokenType.FLOAT, number))
-        else:
-            self.position -= 1
-            self.tokensList.append((TokenType.INT, number))
-
-    def tokenizeSpecialCharacter(self):
-        currentElement = self.getCharAt(self.position)
-        tokenValue = None
-        if currentElement == TokenType.L_BRACE.value:
-            token = TokenType.L_BRACE
-        elif currentElement == TokenType.R_BRACE.value:
-            token = TokenType.R_BRACE
-        elif currentElement == TokenType.L_PAREN.value:
-            token = TokenType.L_PAREN
-        elif currentElement == TokenType.R_PAREN.value:
-            token = TokenType.R_PAREN
-        elif currentElement == TokenType.COMMENT.value:
-            token = TokenType.COMMENT
-        elif currentElement == TokenType.ASSIGN.value:
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            if currentElement and currentElement == TokenType.ASSIGN.value:
-                token = TokenType.EQUAL
-            else:
-                self.position -= 1
-                token = TokenType.ASSIGN
-        elif currentElement == TokenType.LESS.value:
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            if currentElement and currentElement == TokenType.ASSIGN.value:
-                token = TokenType.LESS_EQUAL
-            else:
-                self.position -= 1
-                token = TokenType.LESS
-        elif currentElement == TokenType.GREATER.value:
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            if currentElement and currentElement == TokenType.ASSIGN.value:
-                token = TokenType.GREATER_EQUAL
-            else:
-                self.position -= 1
-                token = TokenType.GREATER
-        elif currentElement == TokenType.OR.value[0]:
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            if currentElement and currentElement == TokenType.OR.value[1]:
-                token = TokenType.OR
-            else:
-                raise TokenizerError(f'Single \'{TokenType.OR.value[0]}\' found')
-        elif currentElement == TokenType.AND.value[0]:
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            if currentElement and currentElement == TokenType.AND.value[1]:
-                token = TokenType.AND
-            else:
-                raise TokenizerError(f'Single \'{TokenType.AND.value[0]}\' found')
-        elif currentElement == TokenType.NOT.value:
-            token = TokenType.NOT
-        elif currentElement == TokenType.ADD.value:
-            token = TokenType.ADD
-        elif currentElement == TokenType.SUB.value:
-            token = TokenType.SUB
-        elif currentElement == TokenType.MUL.value:
-            token = TokenType.MUL
-        elif currentElement == TokenType.DIV.value:
-            token = TokenType.DIV
-        elif currentElement == TokenType.MOD.value:
-            token = TokenType.MOD
-        elif currentElement == TokenType.STR_INDICATOR.value:
-            string = ""
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-            while currentElement and currentElement != TokenType.STR_INDICATOR.value:
-                string += currentElement
-                self.position += 1
-                currentElement = self.getCharAt(self.position)
-            if currentElement is None:
-                raise TokenizerError("Unfinished String")
-            else:
-                token = TokenType.STRING
-                tokenValue = string
-        else:
-            raise TokenizerError("Unknown character")
-        self.tokensList.append((token, tokenValue))
-
-    def tokenizeWord(self):
-        name = ""
-        currentElement = self.getCharAt(self.position)
-        while _isProperNameChar(currentElement):
-            name += currentElement
-            self.position += 1
-            currentElement = self.getCharAt(self.position)
-        self.position -= 1
-
-        tokenValue = None
-        if name == TokenType.WHILE.value:
-            token = TokenType.WHILE
-        elif name == TokenType.PRINT.value:
-            token = TokenType.PRINT
-        elif name == TokenType.IF.value:
-            token = TokenType.IF
-        elif name == DataType.BOOL.value:
-            token = TokenType.DATA_TYPE
-            tokenValue = DataType.BOOL
-        elif name == DataType.INT.value:
-            token = TokenType.DATA_TYPE
-            tokenValue = DataType.INT
-        elif name == DataType.FLOAT.value:
-            token = TokenType.DATA_TYPE
-            tokenValue = DataType.FLOAT
-        elif name == DataType.STRING.value:
-            token = TokenType.DATA_TYPE
-            tokenValue = DataType.STRING
-        else:
-            token = TokenType.ID
-            tokenValue = name
-
-        self.tokensList.append((token, tokenValue))
 
 
 if __name__ == "__main__":
@@ -185,7 +133,15 @@ if __name__ == "__main__":
         "a+b / a + b %",
         "mrINTernational a = 12.3",
         "stringiBoi s = 12",
-        "\"It is a String\""
+        "\"It is a String\"",
+        """
+        mrINTernational a = 12;
+        doItIf(a==2)
+        {
+            showMeYourGoods("asd");
+        }
+        """,
+        "{()}"
 
     ]
 
