@@ -68,14 +68,18 @@ class Tokenizer:
                     accumulator = ""
                 accumulator += self.code[position]
                 position += 1
+                hasSecondDelimiter = False
                 while position < len(self.code):
                     accumulator += self.code[position]
                     if self.code[position] == "\"":
                         if self.code[position - 1] != "\\":
                             result.append(accumulator)
                             accumulator = ""
+                            hasSecondDelimiter = True
                             break
                     position += 1
+                if not hasSecondDelimiter:
+                    raise TokenizerError("Unfinished String")
             elif self.code[position].isspace():
                 if accumulator != "":
                     result.append(accumulator)
