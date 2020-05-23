@@ -1,22 +1,28 @@
 from enum import Enum, auto
-from typing import List, Any
+from typing import List
 
 
 class Opcode(Enum):
-    LOAD = auto()
-    STORE = auto()
-    ADD = auto()
-    SUB = auto()
-    MUL = auto()
-    DIV = auto()
-    MOD = auto()
-    PRINT = auto()
-    PRINTC = auto()
-    JMP_IF = auto()
-    JMP_NOT_IF = auto()
-    PUSH = auto()
-    POP = auto()
-    EQ = auto()
+    LOAD = auto()  # push variable specified as parameter
+    STORE = auto()  # pops and sets as variable specified as parameter
+    ADD = auto()  # push stack.pop(1) + stack.pop(0)
+    SUB = auto()  # push stack.pop(1) - stack.pop(0)
+    MUL = auto()  # push stack.pop(1) * stack.pop(0)
+    DIV = auto()  # push stack.pop(1) / stack.pop(0)
+    MOD = auto()  # push stack.pop(1) % stack.pop(0)
+    PRINT = auto()  # prints stack[0]
+    PRINTC = auto()  # prints parameter
+    JMP = auto()  # jump
+    JMP_IF = auto()  # jump if stack.pop(0)
+    JMP_NOT_IF = auto()  # jump if not stack.pop(0)
+    PUSH = auto()  # push parameter
+    POP = auto()  # pops to variable in parameter
+    EQ = auto()  # pushes True if stack.pop(1) == stack.pop(0)
+    NEQ = auto()  # pushes True if stack.pop(1) != stack.pop(0)
+    GE = auto()  # pushes True if stack.pop(1) >= stack.pop(0)
+    GRT = auto()  # pushes True if stack.pop(1) > stack.pop(0)
+    LE = auto()  # pushes True if stack.pop(1) <= stack.pop(0)
+    LESS = auto()  # pushes True if stack.pop(1) < stack.pop(0)
 
 
 

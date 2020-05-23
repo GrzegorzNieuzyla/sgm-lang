@@ -1,5 +1,5 @@
 from typing import List
-from Opcode import Opcode, Operation, ParameterType, Parameter
+from sgm_lang.Opcode import Opcode, Operation, ParameterType, Parameter
 
 
 class InterpreterException(Exception):
@@ -30,27 +30,27 @@ class BytecodeInterpreter:
             self._validateParametersLength(current_op, parameters, 0)
             a = self.stack.pop()
             b = self.stack.pop()
-            self.stack.append(a + b)
+            self.stack.append(b + a)
         elif current_op.opcode == Opcode.SUB:
             self._validateParametersLength(current_op, parameters, 0)
             a = self.stack.pop()
             b = self.stack.pop()
-            self.stack.append(a - b)
+            self.stack.append(b - a)
         elif current_op.opcode == Opcode.MUL:
             self._validateParametersLength(current_op, parameters, 0)
             a = self.stack.pop()
             b = self.stack.pop()
-            self.stack.append(a * b)
+            self.stack.append(b * a)
         elif current_op.opcode == Opcode.DIV:
             self._validateParametersLength(current_op, parameters, 0)
             a = self.stack.pop()
             b = self.stack.pop()
-            self.stack.append(a / b)
+            self.stack.append(b / a)
         elif current_op.opcode == Opcode.MOD:
             self._validateParametersLength(current_op, parameters, 0)
             a = self.stack.pop()
             b = self.stack.pop()
-            self.stack.append(a % b)
+            self.stack.append(b % a)
         elif current_op.opcode == Opcode.LOAD:
             self._validateParametersLength(current_op, parameters, 1)
             if parameters[0].value not in self.variables:
@@ -72,6 +72,12 @@ class BytecodeInterpreter:
         elif current_op.opcode == Opcode.POP:
             self._validateParametersLength(current_op, parameters, 1)
             self.variables[parameters[0].value] = self.stack.pop()
+        elif current_op.opcode == Opcode.JMP:
+            self._validateParametersLength(current_op, parameters, 1)
+            if parameters[0].paramType == ParameterType.IMMEDIATE:
+                self.ip = parameters[0].value
+            elif parameters[0].paramType == ParameterType.RELATIVE:
+                self.ip += parameters[0].value
         elif current_op.opcode == Opcode.JMP_IF:
             self._validateParametersLength(current_op, parameters, 1)
             if self.stack.pop():
@@ -90,7 +96,32 @@ class BytecodeInterpreter:
             self._validateParametersLength(current_op, parameters, 0)
             a = self.stack.pop()
             b = self.stack.pop()
-            self.stack.append(a == b)
+            self.stack.append(b == a)
+        elif current_op.opcode == Opcode.NEQ:
+            self._validateParametersLength(current_op, parameters, 0)
+            a = self.stack.pop()
+            b = self.stack.pop()
+            self.stack.append(b != a)
+        elif current_op.opcode == Opcode.GE:
+            self._validateParametersLength(current_op, parameters, 0)
+            a = self.stack.pop()
+            b = self.stack.pop()
+            self.stack.append(b >= a)
+        elif current_op.opcode == Opcode.GRT:
+            self._validateParametersLength(current_op, parameters, 0)
+            a = self.stack.pop()
+            b = self.stack.pop()
+            self.stack.append(b > a)
+        elif current_op.opcode == Opcode.LE:
+            self._validateParametersLength(current_op, parameters, 0)
+            a = self.stack.pop()
+            b = self.stack.pop()
+            self.stack.append(b <= a)
+        elif current_op.opcode == Opcode.LESS:
+            self._validateParametersLength(current_op, parameters, 0)
+            a = self.stack.pop()
+            b = self.stack.pop()
+            self.stack.append(b < a)
         else:
             raise InterpreterException("Invalid operation")
         self.ip += 1
@@ -115,61 +146,96 @@ if __name__ == "__main__":
     10: print(e)
     11: if c == 2: print("if 1")
     12: if e == 1: print("if 2")
+    13: if d > 1: print("d > 1")
+    14: if d != 2: print("d != 2")
+    15: if d <= 2: print("d <= 2")
+    16: if d >= 2: print("d >= 2")
+    17: if d < 2: print("d < 2")
     
     """
     program = [
-        #1
+        # 1
         Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
         Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
         Operation(Opcode.ADD, []),
         Operation(Opcode.STORE, [Parameter(ParameterType.IMMEDIATE, "a")]),
-        #2
+        # 2
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "a")]),
         Operation(Opcode.PRINT, []),
-        #3 
-        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 1)]),
+        # 3
         Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 1)]),
         Operation(Opcode.SUB, []),
         Operation(Opcode.STORE, [Parameter(ParameterType.IMMEDIATE, "b")]),
-        #4
+        # 4
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "b")]),
         Operation(Opcode.PRINT, []),
-        #5
+        # 5
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "b")]),
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "a")]),
         Operation(Opcode.MUL, []),
         Operation(Opcode.STORE, [Parameter(ParameterType.IMMEDIATE, "c")]),
-        #6
+        # 6
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "c")]),
         Operation(Opcode.PRINT, []),
-        #7
-        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        # 7
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "c")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
         Operation(Opcode.DIV, []),
         Operation(Opcode.STORE, [Parameter(ParameterType.IMMEDIATE, "d")]),
-        #8
+        # 8
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "d")]),
         Operation(Opcode.PRINT, []),
-        #9
-        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 3)]),
+        # 9
         Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 10)]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 3)]),
         Operation(Opcode.MOD, []),
         Operation(Opcode.STORE, [Parameter(ParameterType.IMMEDIATE, "e")]),
-        #10
+        # 10
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "e")]),
         Operation(Opcode.PRINT, []),
-        #11
-        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        # 11
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "c")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
         Operation(Opcode.EQ, []),
         Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
         Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "if 1")]),
-        #12
-        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 1)]),
+        # 12
         Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "e")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 1)]),
         Operation(Opcode.EQ, []),
         Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
-        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "if 2")])
+        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "if 2")]),
+        # 13
+        Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "d")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 1)]),
+        Operation(Opcode.GRT, []),
+        Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
+        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "d > 1")]),
+        # 14
+        Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "d")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        Operation(Opcode.NEQ, []),
+        Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
+        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "d != 2")]),
+        # 15
+        Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "d")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        Operation(Opcode.LE, []),
+        Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
+        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "d <= 2")]),
+        # 16
+        Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "d")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        Operation(Opcode.GE, []),
+        Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
+        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "d >= 2")]),
+        # 17
+        Operation(Opcode.LOAD, [Parameter(ParameterType.IMMEDIATE, "d")]),
+        Operation(Opcode.PUSH, [Parameter(ParameterType.IMMEDIATE, 2)]),
+        Operation(Opcode.LESS, []),
+        Operation(Opcode.JMP_NOT_IF, [Parameter(ParameterType.RELATIVE, 1)]),
+        Operation(Opcode.PRINTC, [Parameter(ParameterType.RELATIVE, "d < 2")]),
     ]
     from pprint import pprint
     pprint(program)
