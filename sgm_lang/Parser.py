@@ -240,8 +240,8 @@ class Parser(object):
 
 
 if __name__ == "__main__":
-    #text = "1 + 5 * 9 - ( 20 / 10 )"
-    text = "mrINTernational zmienna = 12 * 4 - 5;" \
+    text = "mrINTernational zmienna = 1 + 5 * 9 - ( 20 / 10 )"
+    text2 = "mrINTernational zmienna = 12 * 4 - 5;" \
            "stringiBoi slowo = \"SloWa Ze Spacjami 1 2 +\";" \
            "zmienna2 = (zmienna + 2) * 5;"
     lexer = Tokenizer(text).tokenize()
