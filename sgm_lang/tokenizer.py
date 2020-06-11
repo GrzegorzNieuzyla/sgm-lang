@@ -18,7 +18,7 @@ class Tokenizer:
         # jak wystąpi {()} to możesz powstawiać między spacje i semantycznie bez zmiany: {()} == { ( ) }
         self.splittable = "(){}![]+/-*;"
         # Tych nie można rozdzielać bez zmiany znaczenia: == [to nie to samo co ] = =
-        self.nonSplittable = "<>=|&"
+        self.unSplittable = "<>=|&"
 
         self.keyWords = [x.value for x in TokenType]
         self.dataTypes = [x.value for x in DataType]
@@ -40,11 +40,11 @@ class Tokenizer:
     def isSplittable(self, char):
         return char in self.splittable
 
-    def isNonSplittable(self, char):
-        return char in self.nonSplittable
+    def isUnSplittable(self, char):
+        return char in self.unSplittable
 
     def isSymbol(self, char):
-        return self.isNonSplittable(char) or self.isSplittable(char)
+        return self.isUnSplittable(char) or self.isSplittable(char)
 
     # czy dane dwa znaki występujące po sobię można rozdzielić?
     # == -> nie
@@ -93,10 +93,15 @@ class Tokenizer:
 
     def insertSpacesAndSplit(self):
         index = 1
+        inString = False
         while index < len(self.code):
-            if self.canBeSplit(self.code[index - 1], self.code[index]):
+            if self.code[index - 1] == '"':
+                inString = True
+            if not inString and self.canBeSplit(self.code[index - 1], self.code[index]):
                 self.code = self.code[:index] + ' ' + self.code[index:]
                 index += 1
+            if self.code[index] == '"':
+                inString = False
             index += 1
         self.splitCode = self.splitWithStrings()
 
@@ -137,7 +142,7 @@ if __name__ == "__main__":
         "a+b / a + b %",
         "mrINTernational a = 12.3",
         "stringiBoi s = 12",
-        "\"It is a String\"",
+        "\"It i()s a String\"",
         """
         mrINTernational a = 12;
         doItIf(a==2)
