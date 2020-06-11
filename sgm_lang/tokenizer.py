@@ -1,39 +1,161 @@
+from sgm_lang.DataType import DataType
 from sgm_lang.TokenType import TokenType
-
-specialCharacters = ['{', '}', '(', ')']  # ...
-
-
-def tokenizeNumber(code, position):
-    number = ""
-    isFloat = False
-    while position < len(code) and (code[position].isdigit() or code[position] == '.'):
-        if code[position] == '.':
-            isFloat = True
-        number += code[position]
-        position += 1
-    if isFloat:
-        return position, (TokenType.FLOAT, number)
-    else:
-        return position, (TokenType.FLOAT, number)
+from sgm_lang.CompoundToken import CompoundToken
 
 
-def tokenize(code):
-    tokensList = []
-    position = 0
-    while position < len(code):
-        currentElement = code[position]
-        if currentElement.isspace():
-            pass
-        elif currentElement.isalpha():
-            print(f'{currentElement} <- is character')
-        elif currentElement.isdigit():
-            position, token = tokenizeNumber(code, position)
-            tokensList.append(token)
-        elif currentElement in specialCharacters:
-            print(f'{currentElement} <- is special character')
-        position += 1
-
-    return tokensList
+class TokenizerError(Exception):
+    pass
 
 
-print(tokenize("123.231 12 0.1 1."))
+class Tokenizer:
+
+    def __init__(self, code):
+        self.position = 0
+        self.code = code
+        self.splitCode = []
+        self.tokensList = []
+
+        # jak wystąpi {()} to możesz powstawiać między spacje i semantycznie bez zmiany: {()} == { ( ) }
+        self.splittable = "(){}![]+/-*;"
+        # Tych nie można rozdzielać bez zmiany znaczenia: == [to nie to samo co ] = =
+        self.unSplittable = "<>=|&"
+
+        self.keyWords = [x.value for x in TokenType]
+        self.dataTypes = [x.value for x in DataType]
+
+    def isParsableToInt(self, string):
+        try:
+            int(string)
+        except ValueError:
+            return False
+        return True
+
+    def isParsableToFloat(self, string):
+        try:
+            float(string)
+        except ValueError:
+            return False
+        return True
+
+    def isSplittable(self, char):
+        return char in self.splittable
+
+    def isUnSplittable(self, char):
+        return char in self.unSplittable
+
+    def isSymbol(self, char):
+        return self.isUnSplittable(char) or self.isSplittable(char)
+
+    # czy dane dwa znaki występujące po sobię można rozdzielić?
+    # == -> nie
+    # a= -> tak (a= [to to samo co ] a = )
+    def canBeSplit(self, char1, char2):
+        return char1.isalnum() and self.isSymbol(char2) or \
+               char2.isalnum() and self.isSymbol(char1) or \
+               self.isSplittable(char1) and self.isSymbol(char2) or \
+               self.isSplittable(char2) and self.isSymbol(char1)
+
+    # Działa jak split(), ale dodatkowo uwzględnia Stringi w ciągu-> nie rozdzieli spacjami słów wewnątrz "...".
+    # Powinno skipowac wyeskejpowane " -> \"
+    def splitWithStrings(self):
+        result = []
+        accumulator = ""
+        position = 0
+        while position < len(self.code):
+            if self.code[position] == "\"":
+                if accumulator != "":
+                    result.append(accumulator)
+                    accumulator = ""
+                accumulator += self.code[position]
+                position += 1
+                hasSecondDelimiter = False
+                while position < len(self.code):
+                    accumulator += self.code[position]
+                    if self.code[position] == "\"":
+                        if self.code[position - 1] != "\\":
+                            result.append(accumulator)
+                            accumulator = ""
+                            hasSecondDelimiter = True
+                            break
+                    position += 1
+                if not hasSecondDelimiter:
+                    raise TokenizerError("Unfinished String")
+            elif self.code[position].isspace():
+                if accumulator != "":
+                    result.append(accumulator)
+                    accumulator = ""
+            else:
+                accumulator += self.code[position]
+            position += 1
+        if accumulator != "":
+            result.append(accumulator)
+        return result
+
+    def insertSpacesAndSplit(self):
+        index = 1
+        inString = False
+        while index < len(self.code):
+            if self.code[index - 1] == '"':
+                inString = True
+            if not inString and self.canBeSplit(self.code[index - 1], self.code[index]):
+                self.code = self.code[:index] + ' ' + self.code[index:]
+                index += 1
+            if self.code[index] == '"':
+                inString = False
+            index += 1
+        self.splitCode = self.splitWithStrings()
+
+    def tokenize(self):
+        self.insertSpacesAndSplit()
+        while self.position < len(self.splitCode):
+            word = self.splitCode[self.position]
+
+            if word in self.keyWords:
+                self.tokensList.append((TokenType(word), None))
+            elif word in self.dataTypes:
+                self.tokensList.append((CompoundToken.DATA_TYPE, DataType(word)))
+
+            elif word == "true" or word == "false":
+                self.tokensList.append((CompoundToken.BOOL, bool(word)))
+            elif self.isParsableToInt(word):
+                self.tokensList.append((CompoundToken.INT, int(word)))
+            elif self.isParsableToFloat(word):
+                self.tokensList.append((CompoundToken.FLOAT, float(word)))
+            elif "\"" in word:
+                self.tokensList.append((CompoundToken.STRING, word))
+
+            elif word.isidentifier():
+                self.tokensList.append((CompoundToken.ID, word))
+            else:
+                raise TokenizerError("Something is wrong in Tokenizer")
+            self.position += 1
+        return self.tokensList
+
+
+if __name__ == "__main__":
+    tests = [
+        " 123.456",
+        "123 456 78",
+        "12....3",
+        "32.2.2.2.2",
+        " = == === ==== ",
+        "a+b / a + b %",
+        "mrINTernational a = 12.3",
+        "stringiBoi s = 12",
+        "\"It i()s a String\"",
+        """
+        mrINTernational a = 12;
+        doItIf(a==2)
+        {
+            showMeYourGoods("asd");
+        }
+        """,
+        "{()}"
+
+    ]
+
+    for theCode in tests:
+        try:
+            print(f'{theCode}\nTOKENIZED AS: {Tokenizer(theCode).tokenize()}\n')
+        except TokenizerError as e:
+            print(f'{theCode}\nTOKENIZED AS: {e}\n')
