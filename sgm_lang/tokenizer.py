@@ -93,15 +93,15 @@ class Tokenizer:
 
     def insertSpacesAndSplit(self):
         index = 1
-        inString = False
+        inString = True if self.code[0] == '"' else False
         while index < len(self.code):
-            if self.code[index - 1] == '"':
-                inString = True
+            if self.code[index] == '"':
+                inString = not inString
             if not inString and self.canBeSplit(self.code[index - 1], self.code[index]):
                 self.code = self.code[:index] + ' ' + self.code[index:]
                 index += 1
             if self.code[index] == '"':
-                inString = False
+                inString = not inString
             index += 1
         self.splitCode = self.splitWithStrings()
 
