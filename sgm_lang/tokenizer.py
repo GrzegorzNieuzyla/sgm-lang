@@ -93,43 +93,60 @@ class Tokenizer:
 
     def insertSpacesAndSplit(self):
         index = 1
-        inString = False
+        inString = True if self.code[0] == '"' else False
         while index < len(self.code):
-            if self.code[index - 1] == '"':
-                inString = True
+            if self.code[index] == '"':
+                inString = not inString
             if not inString and self.canBeSplit(self.code[index - 1], self.code[index]):
                 self.code = self.code[:index] + ' ' + self.code[index:]
                 index += 1
             if self.code[index] == '"':
-                inString = False
+                inString = not inString
             index += 1
         self.splitCode = self.splitWithStrings()
 
     def tokenize(self):
-        self.insertSpacesAndSplit()
-        while self.position < len(self.splitCode):
-            word = self.splitCode[self.position]
+        self.deleteComments()
+        if len(self.code) != 0:
+            self.insertSpacesAndSplit()
+            while self.position < len(self.splitCode):
+                word = self.splitCode[self.position]
 
-            if word in self.keyWords:
-                self.tokensList.append((TokenType(word), None))
-            elif word in self.dataTypes:
-                self.tokensList.append((CompoundToken.DATA_TYPE, DataType(word)))
+                if word in self.keyWords:
+                    self.tokensList.append((TokenType(word), None))
+                elif word in self.dataTypes:
+                    self.tokensList.append((CompoundToken.DATA_TYPE, DataType(word)))
 
-            elif word == "true" or word == "false":
-                self.tokensList.append((CompoundToken.BOOL, bool(word)))
-            elif self.isParsableToInt(word):
-                self.tokensList.append((CompoundToken.INT, int(word)))
-            elif self.isParsableToFloat(word):
-                self.tokensList.append((CompoundToken.FLOAT, float(word)))
-            elif "\"" in word:
-                self.tokensList.append((CompoundToken.STRING, word))
+                elif word == "true" or word == "false":
+                    self.tokensList.append((CompoundToken.BOOL, bool(word)))
+                elif self.isParsableToInt(word):
+                    self.tokensList.append((CompoundToken.INT, int(word)))
+                elif self.isParsableToFloat(word):
+                    self.tokensList.append((CompoundToken.FLOAT, float(word)))
+                elif "\"" in word:
+                    self.tokensList.append((CompoundToken.STRING, word))
 
-            elif word.isidentifier():
-                self.tokensList.append((CompoundToken.ID, word))
-            else:
-                raise TokenizerError("Something is wrong in Tokenizer")
-            self.position += 1
+                elif word.isidentifier():
+                    self.tokensList.append((CompoundToken.ID, word))
+                else:
+                    raise TokenizerError("Something is wrong in Tokenizer")
+                self.position += 1
         return self.tokensList
+
+    def deleteComments(self):
+        commentStart = self.position
+        while commentStart < len(self.code):
+            if self.code[commentStart] == TokenType.COMMENT.value:
+                commentEnd = commentStart
+                while commentEnd < len(self.code) and self.code[commentEnd] != '\n':
+                    commentEnd += 1
+
+                if commentEnd == len(self.code):
+                    # Ends with a comment
+                    self.code = self.code[:commentStart]
+                else:
+                    self.code = self.code[:commentStart] + self.code[commentEnd:]
+            commentStart += 1
 
 
 if __name__ == "__main__":
@@ -144,13 +161,11 @@ if __name__ == "__main__":
         "stringiBoi s = 12",
         "\"It i()s a String\"",
         """
-        mrINTernational a = 12;
-        doItIf(a==2)
-        {
-            showMeYourGoods("asd");
-        }
-        """,
-        "{()}"
+        bool x = True # comment
+        # comment2
+        12#comment
+        #comment
+        """
 
     ]
 
