@@ -25,6 +25,7 @@ class Opcode(Enum):
     LESS = auto()  # pushes True if stack.pop(1) < stack.pop(0)
     BINARY_OR = auto()
     BINARY_AND = auto()
+    NOT = auto()  # pushes !stack.pop(0)
 
 
 
