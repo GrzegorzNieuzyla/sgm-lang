@@ -35,6 +35,13 @@ class Num(AST):
     def __str__(self):
         return self.value
 
+class Logic(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token[0] == TokenType.TRUE
+
+    def __str__(self):
+        return self.value
 
 class Compound(AST):
     def __init__(self):
@@ -126,6 +133,7 @@ class Parser(object):
         """factor : INTEGER | BOOL | FLOAT | STRING
         | LPAREN expr RPAREN | LBRACE expr RBRACE
         | NOT expr
+        | TRUE | FALSE
         | variable"""
         token = self.current_token
         if token[0] == CompoundToken.INT:
@@ -153,6 +161,14 @@ class Parser(object):
         elif token[0] == TokenType.NOT:
             self.eat(TokenType.NOT)
             node = LogicOp(None, token, self.expr())
+            return node
+        elif token[0] == TokenType.TRUE:
+            node = Logic(token)
+            self.eat(TokenType.TRUE)
+            return node
+        elif token[0] == TokenType.FALSE:
+            node = Logic(token)
+            self.eat(TokenType.FALSE)
             return node
         elif token[0] == CompoundToken.DATA_TYPE:
             node = self.variableDefinition()
@@ -233,12 +249,16 @@ class Parser(object):
                        | statement SEMICOLON statement_list
         """
         node = self.statement()
-
         results = [node]
 
         while self.current_token[0] == TokenType.SEMICOLON:
             self.eat(TokenType.SEMICOLON)
             results.append(self.statement())
+
+            # if self.current_token[0] != TokenType.SEMICOLON:
+            #     results.append(self.statement())
+
+
 
         if self.current_token[0] == CompoundToken.ID:
             self.error()
@@ -252,7 +272,6 @@ class Parser(object):
                   | print(expr)
                   | if(expr) { statement_list }
                   | while(expr) { statement_list }
-                  | # Comment [in progress]
                   | empty
         """
         if self.current_token[0] == CompoundToken.DATA_TYPE:
@@ -326,6 +345,8 @@ class Parser(object):
         self.eat(TokenType.L_BRACE)
         statements = self.compound_statement()
         self.eat(TokenType.R_BRACE)
+        self.current_token = (TokenType.SEMICOLON, None)
+        self.index -= 1
 
         node = If(token, expression, statements)
         return node
@@ -339,6 +360,8 @@ class Parser(object):
         self.eat(TokenType.L_BRACE)
         statements = self.compound_statement()
         self.eat(TokenType.R_BRACE)
+        self.current_token = (TokenType.SEMICOLON, None)
+        self.index -= 1
 
         node = While(token, expression, statements)
         return node
@@ -383,18 +406,20 @@ if __name__ == "__main__":
         # Tu też jest komentarz
         """
     text7 = """
-        mrINTernational a = 0;
-        showMeYourGoods("start");
-        youSpinMeRound(a == 10)
+
+
+        youSpinMeRound(a < 10)
         {
             a = a + 1;
             showMeYourGoods(a);
-            doItIf((a % 2) == 0)
-            {
-                showMeYourGoods("even");
-            }
         }
         showMeYourGoods("end");
+        a = 0;
+        youSpinMeRound(a < 10)
+        {
+            a = a + 1;
+            showMeYourGoods(a);
+        }
     """
     lexer = Tokenizer(text7).tokenize()
     type, val = lexer[0]
@@ -404,8 +429,8 @@ if __name__ == "__main__":
     parser = Parser(lexer)
     print(f'Parser: {parser}')
 
-    try:
-        result = parser.parse()
-        print(f'Parser2: {result}')
-    except:
-        print("Error")
+    # try:
+    result = parser.parse()
+    print(f'Parser2: {result}')
+    # except:
+    #     print("Error")

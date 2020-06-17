@@ -20,6 +20,8 @@ class TokenType(Enum):
     OR = "||"
     AND = "&&"
     NOT = '!'
+    TRUE = "True"
+    FALSE = "False"
 
     ADD = '+'
     SUB = '-'
@@ -61,3 +63,5 @@ class TokenType(Enum):
             return Opcode.BINARY_AND
         elif self == TokenType.OR:
             return Opcode.BINARY_OR
+        elif self == TokenType.NOT:
+            return Opcode.NOT
