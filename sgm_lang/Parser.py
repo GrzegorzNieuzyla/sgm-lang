@@ -60,12 +60,13 @@ class Assign(AST):
 class Var(AST):
     """The Var node is constructed out of ID token."""
 
-    def __init__(self, dataType, ID):
+    def __init__(self, dataType, ID, name):
         self.dataType = dataType
         self.ID = ID
+        self.name = name
 
     def __str__(self):
-        return f'{self.dataType} -> {self.ID}'
+        return f'{self.dataType} -> {self.ID} name: {self.name}'
 
 
 class NoOp(AST):
@@ -288,8 +289,9 @@ class Parser(object):
         """
         DataType variable
         """
-        node = Var(self.current_token[0], self.current_token[1])
+        node = Var(self.current_token[0], self.current_token[1], None)
         self.eat(CompoundToken.DATA_TYPE)
+        node.name = self.current_token[1]
         self.eat(CompoundToken.ID)
         return node
 
@@ -297,7 +299,7 @@ class Parser(object):
         """
         variable
         """
-        node = Var(None, self.current_token[1])
+        node = Var(None, None, self.current_token[1])
         self.eat(CompoundToken.ID)
         return node
 
@@ -349,10 +351,10 @@ class Parser(object):
         if (self.index >= len(self.lexer)):
             return (None, None)
         token = self.lexer[self.index]
-        print(self.index)
+        # print(self.index)
         self.index += 1
 
-        print(token[0])
+        # print(token[0])
 
         return token
 
@@ -375,9 +377,26 @@ if __name__ == "__main__":
             "showMeYourGoods(zmienna);" \
             "showMeYourGoods(1+2*4-(90 / 10) % 3);" \
             "}"
-    text6 = "# to jest komentarz" \
-            "bool zmienna = True; # Tu też jest komentarz"
-    lexer = Tokenizer(text5).tokenize()
+    text6 = """
+        # to jest komentarz
+        bool zmienna = True;
+        # Tu też jest komentarz
+        """
+    text7 = """
+        mrINTernational a = 0;
+        showMeYourGoods("start");
+        youSpinMeRound(a == 10)
+        {
+            a = a + 1;
+            showMeYourGoods(a);
+            doItIf((a % 2) == 0)
+            {
+                showMeYourGoods("even");
+            }
+        }
+        showMeYourGoods("end");
+    """
+    lexer = Tokenizer(text7).tokenize()
     type, val = lexer[0]
     print(f'Lexer: {lexer[0]}')
     print(f'Lexer: {lexer}')

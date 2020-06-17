@@ -165,15 +165,21 @@ if __name__ == "__main__":
         # comment2
         12#comment
         #comment
+        """,
         """
-        mrINTernational a = 12;
-        doItIf(a==2)
-        {
-            showMeYourGoods("asd");
-        }
+            mrINTernational a = 12;
+            doItIf(a==2)
+            {
+                showMeYourGoods("asd");
+            }
         """,
         "{()}",
-        "# Kom"
+        "# Kom",
+        """
+        # to jest komentarz
+        bool zmienna = True;
+        # Tu też jest komentarz
+        """
 
     ]
 

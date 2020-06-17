@@ -23,6 +23,8 @@ class Opcode(Enum):
     GRT = auto()  # pushes True if stack.pop(1) > stack.pop(0)
     LE = auto()  # pushes True if stack.pop(1) <= stack.pop(0)
     LESS = auto()  # pushes True if stack.pop(1) < stack.pop(0)
+    BINARY_OR = auto()
+    BINARY_AND = auto()
 
 
 
