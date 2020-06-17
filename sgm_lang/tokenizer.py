@@ -166,6 +166,14 @@ if __name__ == "__main__":
         12#comment
         #comment
         """
+        mrINTernational a = 12;
+        doItIf(a==2)
+        {
+            showMeYourGoods("asd");
+        }
+        """,
+        "{()}",
+        "# Kom"
 
     ]
 
