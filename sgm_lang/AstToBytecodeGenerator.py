@@ -5,20 +5,14 @@ from sgm_lang.BytecodeGenerator import BytecodeGenerator
 from sgm_lang.Opcode import Operation
 from sgm_lang.Interpreter import BytecodeInterpreter
 from typing import List
-from pprint import pprint
 
 class AstToBytecodeGenerator():
     def __init__(self, ast):
         self.ast = ast
 
     def generate(self) -> List[Operation]:
-        print(self.ast)
         program = []
         for node in self.ast.children:
-
-            op = None
-            print("node:")
-            print(node)
             if node.__class__ == NoOp:
                 continue
             elif node.__class__ == Assign:
@@ -30,22 +24,13 @@ class AstToBytecodeGenerator():
             elif node.__class__ == While:
                 op = self.generateWhile(node)
 
-            print("op:")
-            print(op)
             program.extend(op)
-            print("program:")
-            pprint(program)
-            print("--------")
         return program
 
     def generateSubprogram(self, nodes) -> List[Operation]:
-        print(nodes)
         program = []
         for node in nodes.children:
-
             op = None
-            print("node:")
-            print(node)
             if node.__class__ == NoOp:
                 return program
             elif node.__class__ == Assign:
@@ -57,47 +42,42 @@ class AstToBytecodeGenerator():
             elif node.__class__ == While:
                 op = self.generateWhile(node)
 
-            print("op:")
-            print(op)
             program.extend(op)
-            print("program:")
-            pprint(program)
-            print("--------")
         return program
 
     def generateAssign(self, node) -> Operation:
-        op = None
-        if(node.right.__class__ == Var):
+        if node.right.__class__ == Var:
             op = BytecodeGenerator.generateVariableSetConstant(
                 node.left.name, node.right.name)
-        elif (node.right.__class__ in (Num, Logic)):
+        elif node.right.__class__ in (Num, Logic):
             op = BytecodeGenerator.generateVariableSetConstant(
                 node.left.name, node.right.value)
-        elif (node.right.__class__ in (BinOp, LogicOp)):
-            print("match exp")
+        elif node.right.__class__ in (BinOp, LogicOp):
             op = BytecodeGenerator.generateVariableSet(node.left.name, self.generateExpresion(node.right))
 
         return op
 
     def generateExpresion(self, node):
-        leftOp = None
-        rightOp = None
-
-        if node.left.__class__ in (BinOp, LogicOp):
-            leftOp = self.generateExpresion(node.left)
+        if (node.__class__ == Var):
+            return BytecodeGenerator.generateVariableDereference(node.name)
+        elif node.__class__ in (Num, Logic):
+            return BytecodeGenerator.generateConstant(node.value)
         else:
-            if (node.left.__class__ == Var):
-                leftOp = BytecodeGenerator.generateVariableDereference(node.left.name)
-            elif (node.left.__class__ in (Num, Logic)):
-                leftOp = BytecodeGenerator.generateConstant(node.left.value)
+            if node.left.__class__ in (BinOp, LogicOp):
+                leftOp = self.generateExpresion(node.left)
+            else:
+                if node.left.__class__ == Var:
+                    leftOp = BytecodeGenerator.generateVariableDereference(node.left.name)
+                elif node.left.__class__ in (Num, Logic):
+                    leftOp = BytecodeGenerator.generateConstant(node.left.value)
 
-        if node.right.__class__ in (BinOp, LogicOp):
-            rightOp = self.generateExpresion(node.right)
-        else:
-            if (node.right.__class__ == Var):
-                rightOp = BytecodeGenerator.generateVariableDereference(node.right.name)
-            elif (node.right.__class__ in (Num, Logic)):
-                rightOp = BytecodeGenerator.generateConstant(node.right.value)
+            if node.right.__class__ in (BinOp, LogicOp):
+                rightOp = self.generateExpresion(node.right)
+            else:
+                if node.right.__class__ == Var:
+                    rightOp = BytecodeGenerator.generateVariableDereference(node.right.name)
+                elif node.right.__class__ in (Num, Logic):
+                    rightOp = BytecodeGenerator.generateConstant(node.right.value)
 
         if node.op[0] == TokenType.NOT:
             return BytecodeGenerator.generateUnaryExpression(rightOp, node.op[0].getOpcode())
@@ -105,14 +85,12 @@ class AstToBytecodeGenerator():
         return BytecodeGenerator.generateMathExpression(leftOp, rightOp, node.op[0].getOpcode())
 
     def generatePrint(self, node):
-        op = None
-        if (node.value.__class__ == Var):
+        if node.value.__class__ == Var:
             op = BytecodeGenerator.generatePrintExpression(
                 BytecodeGenerator.generateVariableDereference(node.value.name))
-        elif(node.value.__class__ in (Num, Logic)):
+        elif node.value.__class__ in (Num, Logic):
             op = BytecodeGenerator.generatePrintConstant(node.value.value)
-        elif (node.value.__class__ in (BinOp, LogicOp)):
-            print("match exp")
+        elif node.value.__class__ in (BinOp, LogicOp):
             op = BytecodeGenerator.generatePrintExpression(
                 self.generateExpresion(node.value))
 
@@ -144,10 +122,12 @@ if __name__ == "__main__":
             "showMeYourGoods(zmienna2);"
     text3 = "bool zmienna = 1 + 3;" \
             "showMeYourGoods(zmienna);"# !(1 + 4 < 2 *4 ) ||
-    text4 =  "doItIf((!(1 + 4 < 2 *4 )) || (!( False && !True))) {" \
-            "bool zmienna = !(1 + 4 < 2 *4 ) || ( False && !True);" \
+    text4 =  "doItIf(True) {" \
+            "bool zmienna = False;" \
+            "showMeYourGoods(zmienna);" \
+            "showMeYourGoods(1);" \
             "}" \
-            "showMeYourGoods(123);"
+            "showMeYourGoods(123);;"
     text5 = "showMeYourGoods(!(1 + 4 < 2 *4 ) || ( 0 && !(1)));" \
             "youSpinMeRound((1 + 4 < 2 *4 ) || ( 0 && !(1))) {" \
             "bool zmienna = !(1 + 4 < 2 *4 ) || ( False && !True);" \
@@ -160,7 +140,7 @@ if __name__ == "__main__":
         # Tu też jest komentarz
         """
     text7 = """
-        mrINTernational a = 0;
+        mrINTernational a = 0 - 5;
         showMeYourGoods("start");
         youSpinMeRound(a < 10)
         {
@@ -169,19 +149,38 @@ if __name__ == "__main__":
         }
         showMeYourGoods("end");
         a = 0;
-        youSpinMeRound(a < 10)
+        youSpinMeRound(a <= 10)
         {
             a = a + 1;
             showMeYourGoods(a);
         }
+        youSpinMeRound((!(1 + 4 < 2 *4 )) || ( 0 && !(1))){showMeYourGoods("test -> False");}
+        doItIf((1 + 4 < 2 *4 ) || ( 0 && !(1)))
+        {
+        
+        
+        
+            showMeYourGoods("test -> True");
+        }
+        
+        doItIf(True)
+        {
+            showMeYourGoods("test -> True2");
+        }
+        
+        showMeYourGoods(a);
+        showMeYourGoods(a * a);
+        # to jest komentarz
+        bool zmiennaB = !True;
+        # Tu też jest komentarz
+        showMeYourGoods(zmiennaB);
     """
-    lexer = Tokenizer(text3).tokenize()
+    lexer = Tokenizer(text7).tokenize()
     type, val = lexer[0]
     print(f'Lexer: {lexer[0]}')
     print(f'Lexer: {lexer}')
 
     parser = Parser(lexer)
-    print(f'Parser: {parser}')
 
     # try:
     #     result = parser.parse()

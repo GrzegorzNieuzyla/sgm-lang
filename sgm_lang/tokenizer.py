@@ -179,7 +179,8 @@ if __name__ == "__main__":
         # to jest komentarz
         bool zmienna = True;
         # Tu też jest komentarz
-        """
+        """,
+        ";;"
 
     ]
 

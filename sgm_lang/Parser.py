@@ -2,7 +2,6 @@ from sgm_lang.tokenizer import Tokenizer
 from sgm_lang.CompoundToken import CompoundToken
 from sgm_lang.TokenType import TokenType
 
-
 class AST(object):
     pass
 
@@ -193,7 +192,7 @@ class Parser(object):
                 self.eat(TokenType.AND)
 
             node = BinOp(left=node, op=token, right=self.factor())
-            print(f'Node: {node}')
+            # print(f'Node: {node}')
 
         return node
 
@@ -230,7 +229,7 @@ class Parser(object):
                 self.eat(TokenType.GREATER_EQUAL)
 
             node = BinOp(left=node, op=token, right=self.term())
-            print(f'Node: {node}')
+            # print(f'Node: {node}')
 
         return node
 
@@ -248,20 +247,25 @@ class Parser(object):
         statement_list : statement
                        | statement SEMICOLON statement_list
         """
-        node = self.statement()
-        results = [node]
+        isFinished = False
+        results = []
+        while not isFinished:
+            node = self.statement()
+            if self.current_token[0] == TokenType.R_BRACE:
+                self.eat(TokenType.R_BRACE)
+                isFinished = True
 
-        while self.current_token[0] == TokenType.SEMICOLON:
-            self.eat(TokenType.SEMICOLON)
-            results.append(self.statement())
+            if self.current_token[0] == None or\
+                self.current_token[0] not in (CompoundToken.DATA_TYPE, CompoundToken.ID, TokenType.PRINT, TokenType.IF, TokenType.WHILE):
+                if self.current_token[0] == None:
+                    isFinished = True
+                else:
+                    self.error()
 
-            # if self.current_token[0] != TokenType.SEMICOLON:
-            #     results.append(self.statement())
+            if self.current_token[0] == None:
+                isFinished = True
 
-
-
-        if self.current_token[0] == CompoundToken.ID:
-            self.error()
+            results.append(node)
 
         return results
 
@@ -276,10 +280,13 @@ class Parser(object):
         """
         if self.current_token[0] == CompoundToken.DATA_TYPE:
             node = self.assignment_statement()
+            self.eat(TokenType.SEMICOLON)
         elif self.current_token[0] == CompoundToken.ID:
             node = self.assignment_statement()
+            self.eat(TokenType.SEMICOLON)
         elif self.current_token[0] == TokenType.PRINT:
             node = self.print_statement()
+            self.eat(TokenType.SEMICOLON)
         elif self.current_token[0] == TokenType.IF:
             node = self.if_statement()
         elif self.current_token[0] == TokenType.WHILE:
@@ -344,9 +351,6 @@ class Parser(object):
         self.eat(TokenType.R_PAREN)
         self.eat(TokenType.L_BRACE)
         statements = self.compound_statement()
-        self.eat(TokenType.R_BRACE)
-        self.current_token = (TokenType.SEMICOLON, None)
-        self.index -= 1
 
         node = If(token, expression, statements)
         return node
@@ -359,9 +363,6 @@ class Parser(object):
         self.eat(TokenType.R_PAREN)
         self.eat(TokenType.L_BRACE)
         statements = self.compound_statement()
-        self.eat(TokenType.R_BRACE)
-        self.current_token = (TokenType.SEMICOLON, None)
-        self.index -= 1
 
         node = While(token, expression, statements)
         return node
@@ -374,10 +375,7 @@ class Parser(object):
         if (self.index >= len(self.lexer)):
             return (None, None)
         token = self.lexer[self.index]
-        # print(self.index)
         self.index += 1
-
-        # print(token[0])
 
         return token
 
@@ -429,8 +427,8 @@ if __name__ == "__main__":
     parser = Parser(lexer)
     print(f'Parser: {parser}')
 
-    # try:
-    result = parser.parse()
-    print(f'Parser2: {result}')
-    # except:
-    #     print("Error")
+    try:
+        result = parser.parse()
+        print(f'Parser2: {result}')
+    except:
+        print("Error")
