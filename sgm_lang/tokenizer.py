@@ -18,7 +18,7 @@ class Tokenizer:
         # jak wystąpi {()} to możesz powstawiać między spacje i semantycznie bez zmiany: {()} == { ( ) }
         self.splittable = "(){}![]+/-*;"
         # Tych nie można rozdzielać bez zmiany znaczenia: == [to nie to samo co ] = =
-        self.nonSplittable = "<>=|&"
+        self.unSplittable = "<>=|&"
 
         self.keyWords = [x.value for x in TokenType]
         self.dataTypes = [x.value for x in DataType]
@@ -40,11 +40,11 @@ class Tokenizer:
     def isSplittable(self, char):
         return char in self.splittable
 
-    def isNonSplittable(self, char):
-        return char in self.nonSplittable
+    def isUnSplittable(self, char):
+        return char in self.unSplittable
 
     def isSymbol(self, char):
-        return self.isNonSplittable(char) or self.isSplittable(char)
+        return self.isUnSplittable(char) or self.isSplittable(char)
 
     # czy dane dwa znaki występujące po sobię można rozdzielić?
     # == -> nie
@@ -93,38 +93,60 @@ class Tokenizer:
 
     def insertSpacesAndSplit(self):
         index = 1
+        inString = True if self.code[0] == '"' else False
         while index < len(self.code):
-            if self.canBeSplit(self.code[index - 1], self.code[index]):
+            if self.code[index] == '"':
+                inString = not inString
+            if not inString and self.canBeSplit(self.code[index - 1], self.code[index]):
                 self.code = self.code[:index] + ' ' + self.code[index:]
                 index += 1
+            if self.code[index] == '"':
+                inString = not inString
             index += 1
         self.splitCode = self.splitWithStrings()
 
     def tokenize(self):
-        self.insertSpacesAndSplit()
-        while self.position < len(self.splitCode):
-            word = self.splitCode[self.position]
+        self.deleteComments()
+        if len(self.code) != 0:
+            self.insertSpacesAndSplit()
+            while self.position < len(self.splitCode):
+                word = self.splitCode[self.position]
 
-            if word in self.keyWords:
-                self.tokensList.append((TokenType(word), None))
-            elif word in self.dataTypes:
-                self.tokensList.append((CompoundToken.DATA_TYPE, DataType(word)))
+                if word in self.keyWords:
+                    self.tokensList.append((TokenType(word), None))
+                elif word in self.dataTypes:
+                    self.tokensList.append((CompoundToken.DATA_TYPE, DataType(word)))
 
-            elif word == "true" or word == "false":
-                self.tokensList.append((CompoundToken.BOOL, bool(word)))
-            elif self.isParsableToInt(word):
-                self.tokensList.append((CompoundToken.INT, int(word)))
-            elif self.isParsableToFloat(word):
-                self.tokensList.append((CompoundToken.FLOAT, float(word)))
-            elif "\"" in word:
-                self.tokensList.append((CompoundToken.STRING, word))
+                elif word == "true" or word == "false":
+                    self.tokensList.append((CompoundToken.BOOL, bool(word)))
+                elif self.isParsableToInt(word):
+                    self.tokensList.append((CompoundToken.INT, int(word)))
+                elif self.isParsableToFloat(word):
+                    self.tokensList.append((CompoundToken.FLOAT, float(word)))
+                elif "\"" in word:
+                    self.tokensList.append((CompoundToken.STRING, word))
 
-            elif word.isidentifier():
-                self.tokensList.append((CompoundToken.ID, word))
-            else:
-                raise TokenizerError("Something is wrong in Tokenizer")
-            self.position += 1
+                elif word.isidentifier():
+                    self.tokensList.append((CompoundToken.ID, word))
+                else:
+                    raise TokenizerError("Something is wrong in Tokenizer")
+                self.position += 1
         return self.tokensList
+
+    def deleteComments(self):
+        commentStart = self.position
+        while commentStart < len(self.code):
+            if self.code[commentStart] == TokenType.COMMENT.value:
+                commentEnd = commentStart
+                while commentEnd < len(self.code) and self.code[commentEnd] != '\n':
+                    commentEnd += 1
+
+                if commentEnd == len(self.code):
+                    # Ends with a comment
+                    self.code = self.code[:commentStart]
+                else:
+                    self.code = self.code[:commentStart] + self.code[commentEnd:]
+            commentStart += 1
 
 
 if __name__ == "__main__":
@@ -137,7 +159,12 @@ if __name__ == "__main__":
         "a+b / a + b %",
         "mrINTernational a = 12.3",
         "stringiBoi s = 12",
-        "\"It is a String\"",
+        "\"It i()s a String\"",
+        """
+        bool x = True # comment
+        # comment2
+        12#comment
+        #comment
         """
         mrINTernational a = 12;
         doItIf(a==2)
