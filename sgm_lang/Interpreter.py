@@ -122,6 +122,10 @@ class BytecodeInterpreter:
             a = self.stack.pop()
             b = self.stack.pop()
             self.stack.append(b < a)
+        elif current_op.opcode == Opcode.NOT:
+            self._validateParametersLength(current_op, parameters, 0)
+            a = self.stack.pop()
+            self.stack.append(not a)
         else:
             raise InterpreterException("Invalid operation")
         self.ip += 1

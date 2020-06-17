@@ -31,9 +31,19 @@ class BytecodeGenerator():
     def generateMathExpression(left: List[Operation], right: List[Operation], opcode: Opcode) -> List[Operation]:
         """
         Applies math operation to left and right operand, result is pushed to stack
-        Left and right operation has to leave stack the same as before execution except for the result at top
+        Left and right operations have to leave stack the same as before execution except for the result at top
         """
         result = left + right
+        result.append(Operation(opcode, []))
+        return result
+    
+    @staticmethod
+    def generateUnaryExpression(operand: List[Operation], opcode: Opcode) -> List[Operation]:
+        """
+        Applies unary operation to operand, result is pushed to stack
+        Operand operation has to leave stack the same as before execution except for the result at top
+        """
+        result = operand
         result.append(Operation(opcode, []))
         return result
 
@@ -78,8 +88,8 @@ if __name__ == '__main__':
     while a != 10
         a = a + 1
         print(a)
-        if a % 2 == 0
-            print("even")
+        if !(a % 2 == 0)
+            print("odd")
     print("end")
     """
     from pprint import pprint
@@ -92,7 +102,8 @@ if __name__ == '__main__':
         BytecodeGenerator.generateConstant(0),
         Opcode.EQ
     )
-    if_block = BytecodeGenerator.generateIf(BytecodeGenerator.generatePrintConstant("even"), if_cond)
+    if_cond = BytecodeGenerator.generateUnaryExpression(if_cond, Opcode.NOT)
+    if_block = BytecodeGenerator.generateIf(BytecodeGenerator.generatePrintConstant("odd"), if_cond)
     while_body = (
         BytecodeGenerator.generateVariableSet(
             "a",
