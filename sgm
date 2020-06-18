@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+import argparse
+from pprint import pprint
+from typing import List
+from sys import stdin
+from sgm_lang.Interpreter import BytecodeInterpreter 
+from sgm_lang.Opcode import Operation
+from sgm_lang.AstToBytecodeGenerator import AstToBytecodeGenerator
+from sgm_lang.Parser import AST, Parser
+from sgm_lang.tokenizer import Tokenizer
+
+def read_file(path) -> str:
+    if not path:
+        return stdin.read()
+    with open(path, 'r') as f:
+        return f.read() 
+
+def tokenize(file: str):
+    return Tokenizer(file).tokenize()
+
+
+def astify(tokens):
+    return Parser(tokens).parse()
+
+
+def generate_bytecode(ast):
+    return AstToBytecodeGenerator(ast).generate()
+
+def execute(bytecode: List[Operation]):
+    interpreter = BytecodeInterpreter(bytecode)
+    interpreter.run()
+
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description="SGM language interpreter")
+    parser.add_argument("file", action="store", nargs='?')
+    parser.add_argument("-b", "--bytecode", dest="bytecode",
+                        help="Do not execute, print out bytecode", action="store_true")
+    parser.add_argument("-t", "--tokenizer", dest="tokenizer",
+                        help="Do not execute, print out tokenizer output", action="store_true")
+    parser.add_argument("-a", "--ast", dest="ast",
+                        help="Do not execute, print out ast tree", action="store_true")
+    options = parser.parse_args()
+
+    file = read_file(options.file)
+    tokens = tokenize(file)
+    if options.tokenizer:
+        pprint(tokens)
+        return
+    ast = astify(tokens)
+    if options.ast:
+        pprint(ast)
+        return
+    bytecode = generate_bytecode(ast)
+    if options.bytecode:
+        pprint(bytecode)
+        return
+
+    execute(bytecode)
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()
