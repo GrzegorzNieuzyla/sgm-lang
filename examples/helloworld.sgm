@@ -1,1 +1,1 @@
-showMeYourGoods("Hello World");
+showMeYourGoods("Hello World\n");

@@ -62,10 +62,10 @@ class BytecodeInterpreter:
             self.variables[parameters[0].value] = self.stack.pop()
         elif current_op.opcode == Opcode.PRINT:
             self._validateParametersLength(current_op, parameters, 0)
-            print(self.stack.pop())
+            print(self.stack.pop(), end='')
         elif current_op.opcode == Opcode.PRINTC:
             self._validateParametersLength(current_op, parameters, 1)
-            print(parameters[0].value)
+            print(parameters[0].value, end='')
         elif current_op.opcode == Opcode.PUSH:
             self._validateParametersLength(current_op, parameters, 1)
             self.stack.append(parameters[0].value)

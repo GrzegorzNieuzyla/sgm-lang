@@ -1,0 +1,17 @@
+mrINTernational x = 50;
+mrINTernational y = 1;
+mrINTernational factorial = 1;
+
+youSpinMeRound(x > y)
+{
+    showMeYourGoods("Factorial of ");
+    showMeYourGoods(y);
+    showMeYourGoods(" is: ");
+    factorial = factorial * y;
+    showMeYourGoods(factorial);
+    showMeYourGoods("\n");
+    y = y + 1;
+}
+
+
+

@@ -105,6 +105,9 @@ class Tokenizer:
             index += 1
         self.splitCode = self.splitWithStrings()
 
+    def parseNewLines(self, string: str) -> str:
+        return string.replace('\\n', '\n')
+
     def tokenize(self):
         self.deleteComments()
         if len(self.code) != 0:
@@ -124,7 +127,7 @@ class Tokenizer:
                 elif self.isParsableToFloat(word):
                     self.tokensList.append((CompoundToken.FLOAT, float(word)))
                 elif "\"" in word:
-                    self.tokensList.append((CompoundToken.STRING, word))
+                    self.tokensList.append((CompoundToken.STRING, self.parseNewLines(word[1:-1])))
 
                 elif word.isidentifier():
                     self.tokensList.append((CompoundToken.ID, word))

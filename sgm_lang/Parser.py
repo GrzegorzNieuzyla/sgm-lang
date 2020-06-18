@@ -3,7 +3,8 @@ from sgm_lang.CompoundToken import CompoundToken
 from sgm_lang.TokenType import TokenType
 
 class AST(object):
-    pass
+    def __repr__(self):
+        return str(self)
 
 
 class BinOp(AST):
@@ -14,6 +15,7 @@ class BinOp(AST):
 
     def __str__(self):
         return f'[{self.left.__str__()} <> {self.op} <> {self.right.__str__()}]'
+
 
 
 class LogicOp(AST):

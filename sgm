@@ -51,7 +51,8 @@ def main():
         return
     ast = astify(tokens)
     if options.ast:
-        pprint(ast)
+        for child in ast.children:
+            pprint(child)
         return
     bytecode = generate_bytecode(ast)
     if options.bytecode:
