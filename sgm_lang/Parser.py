@@ -34,7 +34,7 @@ class Num(AST):
         self.value = token[1]
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 class Logic(AST):
     def __init__(self, token):
@@ -42,7 +42,7 @@ class Logic(AST):
         self.value = token[0] == TokenType.TRUE
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 class Compound(AST):
     def __init__(self):

@@ -9,6 +9,7 @@ from typing import List
 class AstToBytecodeGenerator():
     def __init__(self, ast):
         self.ast = ast
+        self.variables = set()
 
     def generate(self) -> List[Operation]:
         program = []
@@ -45,10 +46,21 @@ class AstToBytecodeGenerator():
             program.extend(op)
         return program
 
+    def checkVarAssign(self, var):
+        if not var.ID:
+            if var.name not in self.variables:
+                raise Exception(f"Variable {var.name} was not defined")
+        else:
+            if var.name in self.variables:
+                raise Exception(f"Variable {var.name} redefinition")
+        self.variables.add(var.name)
+
+
     def generateAssign(self, node) -> Operation:
+        self.checkVarAssign(node.left)
         if node.right.__class__ == Var:
-            op = BytecodeGenerator.generateVariableSetConstant(
-                node.left.name, node.right.name)
+            op = BytecodeGenerator.generateVariableSet(
+                node.left.name, BytecodeGenerator.generateVariableDereference(node.right.name))
         elif node.right.__class__ in (Num, Logic):
             op = BytecodeGenerator.generateVariableSetConstant(
                 node.left.name, node.right.value)
