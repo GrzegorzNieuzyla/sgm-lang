@@ -2,7 +2,6 @@ from sgm_lang.tokenizer import Tokenizer
 from sgm_lang.CompoundToken import CompoundToken
 from sgm_lang.TokenType import TokenType
 
-
 class AST(object):
     pass
 
@@ -35,6 +34,13 @@ class Num(AST):
     def __str__(self):
         return self.value
 
+class Logic(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token[0] == TokenType.TRUE
+
+    def __str__(self):
+        return self.value
 
 class Compound(AST):
     def __init__(self):
@@ -60,12 +66,13 @@ class Assign(AST):
 class Var(AST):
     """The Var node is constructed out of ID token."""
 
-    def __init__(self, dataType, ID):
+    def __init__(self, dataType, ID, name):
         self.dataType = dataType
         self.ID = ID
+        self.name = name
 
     def __str__(self):
-        return f'{self.dataType} -> {self.ID}'
+        return f'{self.dataType} -> {self.ID} name: {self.name}'
 
 
 class NoOp(AST):
@@ -125,6 +132,7 @@ class Parser(object):
         """factor : INTEGER | BOOL | FLOAT | STRING
         | LPAREN expr RPAREN | LBRACE expr RBRACE
         | NOT expr
+        | TRUE | FALSE
         | variable"""
         token = self.current_token
         if token[0] == CompoundToken.INT:
@@ -153,6 +161,14 @@ class Parser(object):
             self.eat(TokenType.NOT)
             node = LogicOp(None, token, self.expr())
             return node
+        elif token[0] == TokenType.TRUE:
+            node = Logic(token)
+            self.eat(TokenType.TRUE)
+            return node
+        elif token[0] == TokenType.FALSE:
+            node = Logic(token)
+            self.eat(TokenType.FALSE)
+            return node
         elif token[0] == CompoundToken.DATA_TYPE:
             node = self.variableDefinition()
             return node
@@ -176,7 +192,7 @@ class Parser(object):
                 self.eat(TokenType.AND)
 
             node = BinOp(left=node, op=token, right=self.factor())
-            print(f'Node: {node}')
+            # print(f'Node: {node}')
 
         return node
 
@@ -213,7 +229,7 @@ class Parser(object):
                 self.eat(TokenType.GREATER_EQUAL)
 
             node = BinOp(left=node, op=token, right=self.term())
-            print(f'Node: {node}')
+            # print(f'Node: {node}')
 
         return node
 
@@ -231,16 +247,25 @@ class Parser(object):
         statement_list : statement
                        | statement SEMICOLON statement_list
         """
-        node = self.statement()
+        isFinished = False
+        results = []
+        while not isFinished:
+            node = self.statement()
+            if self.current_token[0] == TokenType.R_BRACE:
+                self.eat(TokenType.R_BRACE)
+                isFinished = True
 
-        results = [node]
+            if self.current_token[0] == None or\
+                self.current_token[0] not in (CompoundToken.DATA_TYPE, CompoundToken.ID, TokenType.PRINT, TokenType.IF, TokenType.WHILE):
+                if self.current_token[0] == None:
+                    isFinished = True
+                else:
+                    self.error()
 
-        while self.current_token[0] == TokenType.SEMICOLON:
-            self.eat(TokenType.SEMICOLON)
-            results.append(self.statement())
+            if self.current_token[0] == None:
+                isFinished = True
 
-        if self.current_token[0] == CompoundToken.ID:
-            self.error()
+            results.append(node)
 
         return results
 
@@ -251,15 +276,17 @@ class Parser(object):
                   | print(expr)
                   | if(expr) { statement_list }
                   | while(expr) { statement_list }
-                  | # Comment [in progress]
                   | empty
         """
         if self.current_token[0] == CompoundToken.DATA_TYPE:
             node = self.assignment_statement()
+            self.eat(TokenType.SEMICOLON)
         elif self.current_token[0] == CompoundToken.ID:
             node = self.assignment_statement()
+            self.eat(TokenType.SEMICOLON)
         elif self.current_token[0] == TokenType.PRINT:
             node = self.print_statement()
+            self.eat(TokenType.SEMICOLON)
         elif self.current_token[0] == TokenType.IF:
             node = self.if_statement()
         elif self.current_token[0] == TokenType.WHILE:
@@ -288,8 +315,9 @@ class Parser(object):
         """
         DataType variable
         """
-        node = Var(self.current_token[0], self.current_token[1])
+        node = Var(self.current_token[0], self.current_token[1], None)
         self.eat(CompoundToken.DATA_TYPE)
+        node.name = self.current_token[1]
         self.eat(CompoundToken.ID)
         return node
 
@@ -297,7 +325,7 @@ class Parser(object):
         """
         variable
         """
-        node = Var(None, self.current_token[1])
+        node = Var(None, None, self.current_token[1])
         self.eat(CompoundToken.ID)
         return node
 
@@ -323,7 +351,6 @@ class Parser(object):
         self.eat(TokenType.R_PAREN)
         self.eat(TokenType.L_BRACE)
         statements = self.compound_statement()
-        self.eat(TokenType.R_BRACE)
 
         node = If(token, expression, statements)
         return node
@@ -336,7 +363,6 @@ class Parser(object):
         self.eat(TokenType.R_PAREN)
         self.eat(TokenType.L_BRACE)
         statements = self.compound_statement()
-        self.eat(TokenType.R_BRACE)
 
         node = While(token, expression, statements)
         return node
@@ -349,10 +375,7 @@ class Parser(object):
         if (self.index >= len(self.lexer)):
             return (None, None)
         token = self.lexer[self.index]
-        print(self.index)
         self.index += 1
-
-        print(token[0])
 
         return token
 
@@ -375,9 +398,28 @@ if __name__ == "__main__":
             "showMeYourGoods(zmienna);" \
             "showMeYourGoods(1+2*4-(90 / 10) % 3);" \
             "}"
-    text6 = "# to jest komentarz" \
-            "bool zmienna = True; # Tu też jest komentarz"
-    lexer = Tokenizer(text5).tokenize()
+    text6 = """
+        # to jest komentarz
+        bool zmienna = True;
+        # Tu też jest komentarz
+        """
+    text7 = """
+
+
+        youSpinMeRound(a < 10)
+        {
+            a = a + 1;
+            showMeYourGoods(a);
+        }
+        showMeYourGoods("end");
+        a = 0;
+        youSpinMeRound(a < 10)
+        {
+            a = a + 1;
+            showMeYourGoods(a);
+        }
+    """
+    lexer = Tokenizer(text7).tokenize()
     type, val = lexer[0]
     print(f'Lexer: {lexer[0]}')
     print(f'Lexer: {lexer}')

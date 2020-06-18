@@ -134,7 +134,8 @@ if __name__ == '__main__':
         while_block +
         BytecodeGenerator.generatePrintConstant("end")
     )
-    pprint(program)
+    print(program)
+    print(program.__class__.__name__)
     print()
     interpreter = BytecodeInterpreter(program)
     interpreter.run()
