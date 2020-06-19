@@ -1,0 +1,13 @@
+mrINTernational x = 0;
+
+youSpinMeRound(x < 10)
+{
+  # Todo: add comments
+  showMeYourGoods(x);
+  doItIf((x % 2) == 0)
+  {
+    showMeYourGoods(" is even");
+  }
+  showMeYourGoods("\n");
+  x = x + 1;
+}

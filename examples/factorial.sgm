@@ -1,4 +1,4 @@
-mrINTernational x = 50;
+mrINTernational x = 20;
 mrINTernational y = 1;
 mrINTernational factorial = 1;
 

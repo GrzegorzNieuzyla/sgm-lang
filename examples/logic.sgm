@@ -12,21 +12,21 @@ showMeYourGoods("\n");
 bool first = False;
 doItIf((f > 20) && (100 == (10*10)))
 {
-    showMeYourGoods("(f > 20) && (100 == (10*10)) is true!\n");
+    showMeYourGoods("(f > 20) && (100 == (10*10)) is true\n");
     first = True;
 }
 
 doItIf(!first){
-    showMeYourGoods("(f > 20) && (100 == (10*10)) is false!\n");
+    showMeYourGoods("(f > 20) && (100 == (10*10)) is false\n");
 }
 
 bool second = False;
 doItIf(!((f > 20) && (100 == (10*10))))
 {
-    showMeYourGoods("!((f > 20) && (100 == (10*10))) is true!\n");
+    showMeYourGoods("!((f > 20) && (100 == (10*10))) is true\n");
     second = True;
 }
 
 doItIf(!second){
-    showMeYourGoods("!((f > 20) && (100 == (10*10))) is false!\n");
+    showMeYourGoods("!((f > 20) && (100 == (10*10))) is false\n");
 }
