@@ -97,6 +97,7 @@ class Tokenizer:
         while index < len(self.code):
             if self.code[index] == '"':
                 inString = not inString
+                index += 1
             if not inString and self.canBeSplit(self.code[index - 1], self.code[index]):
                 self.code = self.code[:index] + ' ' + self.code[index:]
                 index += 1
@@ -132,7 +133,7 @@ class Tokenizer:
                 elif word.isidentifier():
                     self.tokensList.append((CompoundToken.ID, word))
                 else:
-                    raise TokenizerError("Something is wrong in Tokenizer")
+                    raise TokenizerError("Something is wrong in Tokenizer: "+ word)
                 self.position += 1
         return self.tokensList
 
@@ -152,43 +153,13 @@ class Tokenizer:
             commentStart += 1
 
 
-if __name__ == "__main__":
-    tests = [
-        " 123.456",
-        "123 456 78",
-        "12....3",
-        "32.2.2.2.2",
-        " = == === ==== ",
-        "a+b / a + b %",
-        "mrINTernational a = 12.3",
-        "stringiBoi s = 12",
-        "\"It i()s a String\"",
-        """
-        bool x = True # comment
-        # comment2
-        12#comment
-        #comment
-        """,
-        """
-            mrINTernational a = 12;
-            doItIf(a==2)
-            {
-                showMeYourGoods("asd");
-            }
-        """,
-        "{()}",
-        "# Kom",
-        """
-        # to jest komentarz
-        bool zmienna = True;
-        # Tu też jest komentarz
-        """,
-        ";;"
-
-    ]
-
-    for theCode in tests:
-        try:
-            print(f'{theCode}\nTOKENIZED AS: {Tokenizer(theCode).tokenize()}\n')
-        except TokenizerError as e:
-            print(f'{theCode}\nTOKENIZED AS: {e}\n')
+# if __name__ == "__main__":
+#     tests = [
+#         "showMeYourGoods(\"!((f > 20) && (100 == (10*10))) is true!\n\");"
+#         ]
+#
+#     for theCode in tests:
+#         try:
+#             print(f'{theCode}\nTOKENIZED AS: {Tokenizer(theCode).tokenize()}\n')
+#         except TokenizerError as e:
+#             print(f'{theCode}\nTOKENIZED AS: {e}\n')
