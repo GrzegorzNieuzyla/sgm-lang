@@ -1,20 +1,17 @@
 # SGM interpreted language
 
-## Temat:
-Interpreter nowo zdefiniowanego języka w Pythonie
+## Language capabilities
 
-## Zakres funkcjonalności języka
-
-1. Wspierane typy zmiennych: `mrINTernational` (`int`), `boatWhichFloat` (`float`), `stringiBoi` (`string`), `bool`
-2. Komentarze (`# this is a comment`)
-3. Parsowanie wyrażeń matematycznych składających się z `+`, `-`, `*`, `/`, `%` oraz nawiasów `()`
-4. Relacje `==`, `<`, `>`, `<=`, `>=` 
-5. Instrukcja warunkowe `doItIf` (`IF`)
-6. Pętla `youSpinMeRound` (`WHILE`)
-7. Parsowanie operacji logicznych złożonych z `True`, `False`, `&&`, `||`, `!`, `()`
-8. Wypisywanie na standardowe wyjście (funkcja `showMeYourGoods()`)
+1. Supported data types: `mrINTernational` (`int`), `boatWhichFloat` (`float`), `stringiBoi` (`string`), `bool`
+2. Comments (`# this is a comment`)
+3. Parsing mathematical expressions containing of `+`, `-`, `*`, `/`, `%` and parentheses `()`
+4. Mathematical relationships `==`, `<`, `>`, `<=`, `>=` 
+5. Conditional statements `doItIf` (`IF`)
+6. Loop `youSpinMeRound` (`WHILE`)
+7. Parsing logical expressions containing of `True`, `False`, `&&`, `||`, `!`, `()`
+8. Printing to STDOUT (`showMeYourGoods()` function)
 ---
-Przykładowy program:
+Example program:
 ```java
 mrINTernational x = 0;
 youSpinMeRound(x < 10)
@@ -30,8 +27,8 @@ youSpinMeRound(x < 10)
 ```
 
 ---
-**Skład grupy i podział pracy:**   
+**Responsibilities:**   
 Szymon Borowy - Parser  
 Marcin Kozak - Tokenizer  
-Grzegorz Nieużyła - Bytecode i Interpreter  
+Grzegorz Nieużyła - Bytecode and Interpreter  
 
