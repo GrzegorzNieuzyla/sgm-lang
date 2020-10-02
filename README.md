@@ -26,6 +26,12 @@ youSpinMeRound(x < 10)
 }
 ```
 
+## Run
+```
+> python sgm examples/helloworld.sgm
+```
+`examples` directory contains 4 files with example SGM code
+
 ---
 **Responsibilities:**   
 Szymon Borowy - Parser  
